@@ -5,6 +5,7 @@ import postcss from 'postcss'
 import cssnano from 'cssnano'
 import fs from 'fs'
 import path from 'path'
+import mkdirp from 'mkdirp'
 import { getCriticalRules } from './getCriticalRules'
 
 /**
@@ -124,11 +125,19 @@ function writeCriticalFile (filePath: string, css: string) {
     filePath,
     css,
     { flag: append ? 'a' : 'w' },
-    (err: ?ErrnoError) => {
+    (err: ? ErrnoError) => {
       append = true
       if (err) {
-        console.error(err)
-        process.exit(1)
+        mkdirp(
+          filePath,
+          css,
+          (err: ? ErrnoError) => {
+            if (err) {
+              console.error(err)
+              process.exit(1)
+            }
+          }
+        )
       }
     }
   )
