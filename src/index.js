@@ -141,7 +141,7 @@ function mkDirByPathSync (targetDir, onError) {
  * @param {string} filePath Path to write file to.
  * @param {string} css CSS to write to file.
  */
-function writeCriticalFile (filePath: string, css: string) {
+function writeCriticalFile (filePath: string, css: string, preventLoop: boolean = false) {
   fs.writeFile(
     filePath,
     css,
@@ -150,8 +150,10 @@ function writeCriticalFile (filePath: string, css: string) {
       append = true
       
       if (err) {
-        if (!append && (err.code === 'ENOENT' || err.errno === -4058)) {
-          mkDirByPathSync(filePath, (err: ErrnoError) => {
+        if ((err.code === 'ENOENT' || err.errno === -4058) {
+          mkDirByPathSync(filePath, () => {
+            writeCriticalFile(filePath, css, true)
+          }, (err: ErrnoError) => {
             handleCriticalFileCreationError(err)
           })
         } else {
