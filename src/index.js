@@ -113,14 +113,14 @@ function hasNoOtherChildNodes (
   return nodes.filter((child: Object): boolean => child !== node).length === 0
 }
 
-function mkDirByPathSync (targetDir, onError) {
+function mkDirByPathSync (targetDir: string, onSuccess: Function, onError: Function) {
   const sep = path.sep
   const baseDir = process.cwd()
   const dirsToCreate = targetDir.split(process.cwd())[1].substr(1)
   const dirsList = dirsToCreate.split(sep)
 
-  dirsList.reduce((parentDir, childDir, i) => {
-    if(i + 1 === dirsList.length) return
+  dirsList.reduce((parentDir: string, childDir: string, i: number): string | void => {
+    if (i + 1 === dirsList.length) onSuccess()
     const curDir = path.resolve(baseDir, parentDir, childDir)
     try {
       fs.mkdirSync(curDir)
@@ -136,7 +136,6 @@ function mkDirByPathSync (targetDir, onError) {
   }, '.')
 }
 
-
 /**
  * Write a file containing critical CSS.
  *
@@ -150,9 +149,9 @@ function writeCriticalFile (filePath: string, css: string, preventLoop: boolean 
     { flag: append ? 'a' : 'w' },
     (err: ? ErrnoError) => {
       append = true
-      
+
       if (err) {
-        if ((err.code === 'ENOENT' || err.errno === -4058) {
+        if ((err.code === 'ENOENT' || err.errno === -4058)) {
           mkDirByPathSync(filePath, () => {
             writeCriticalFile(filePath, css, true)
           }, (err: ErrnoError) => {
