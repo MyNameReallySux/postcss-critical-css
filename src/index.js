@@ -117,8 +117,10 @@ function mkDirByPathSync (targetDir, onError) {
   const sep = path.sep
   const baseDir = process.cwd()
   const dirsToCreate = targetDir.split(process.cwd())[1].substr(1)
+  const dirsList = dirsToCreate.split(sep)
 
-  dirsToCreate.split(sep).reduce((parentDir, childDir) => {
+  dirsList.reduce((parentDir, childDir, i) => {
+    if(i + 1 === dirsList.length) return
     const curDir = path.resolve(baseDir, parentDir, childDir)
     try {
       fs.mkdirSync(curDir)
