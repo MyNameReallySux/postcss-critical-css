@@ -5,7 +5,6 @@ import postcss from 'postcss'
 import cssnano from 'cssnano'
 import fs from 'fs'
 import path from 'path'
-import mkdirp from 'mkdirp'
 import { getCriticalRules } from './getCriticalRules'
 
 /**
@@ -114,6 +113,28 @@ function hasNoOtherChildNodes (
   return nodes.filter((child: Object): boolean => child !== node).length === 0
 }
 
+function mkDirByPathSync (targetDir, {isRelativeToScript = false} = {}) {
+  const sep = path.sep
+  const initDir = path.isAbsolute(targetDir) ? sep : ''
+  const baseDir = isRelativeToScript ? __dirname : '.'
+
+  targetDir.split(sep).reduce((parentDir, childDir) => {
+    const curDir = path.resolve(baseDir, parentDir, childDir)
+    try {
+      fs.mkdirSync(curDir);
+      console.log(`Directory ${curDir} created!`)
+    } catch (err) {
+      if (err.code !== 'EEXIST') {
+        throw err
+      }
+
+      console.log(`Directory ${curDir} already exists!`)
+    }
+
+    return curDir
+  }, initDir);
+}
+
 /**
  * Write a file containing critical CSS.
  *
@@ -127,20 +148,23 @@ function writeCriticalFile (filePath: string, css: string) {
     { flag: append ? 'a' : 'w' },
     (err: ? ErrnoError) => {
       append = true
+      
       if (err) {
-        mkdirp(
-          filePath,
-          css,
-          (err: ? ErrnoError) => {
-            if (err) {
-              console.error(err)
-              process.exit(1)
-            }
-          }
-        )
+        if (!append && (err.code === 'ENOENT' || err.errno === -4058)) {
+          mkDirByPathSync(filePath, (err: ErrnoError) => {
+            handleCriticalFileCreationError(err)
+          })
+        } else {
+          handleCriticalFileCreationError(err)
+        }
       }
     }
   )
+}
+
+function handleCriticalFileCreationError (err: ErrnoError) {
+  console.error(err)
+  process.exit(1)
 }
 
 /**
