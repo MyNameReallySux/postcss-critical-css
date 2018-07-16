@@ -113,27 +113,27 @@ function hasNoOtherChildNodes (
   return nodes.filter((child: Object): boolean => child !== node).length === 0
 }
 
-function mkDirByPathSync (targetDir, {isRelativeToScript = false} = {}) {
+function mkDirByPathSync (targetDir, onError) {
   const sep = path.sep
-  const initDir = path.isAbsolute(targetDir) ? sep : ''
-  const baseDir = isRelativeToScript ? __dirname : '.'
+  const baseDir = process.cwd()
+  const dirsToCreate = targetDir.split(process.cwd())[1].substr(1)
 
-  targetDir.split(sep).reduce((parentDir, childDir) => {
+  dirsToCreate.split(sep).reduce((parentDir, childDir) => {
     const curDir = path.resolve(baseDir, parentDir, childDir)
     try {
-      fs.mkdirSync(curDir);
+      fs.mkdirSync(curDir)
       console.log(`Directory ${curDir} created!`)
     } catch (err) {
       if (err.code !== 'EEXIST') {
-        throw err
+        onError(err)
       }
-
       console.log(`Directory ${curDir} already exists!`)
     }
 
     return curDir
-  }, initDir);
+  }, '.')
 }
+
 
 /**
  * Write a file containing critical CSS.
